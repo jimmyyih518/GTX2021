@@ -8,11 +8,9 @@ import os
 import pandas as pd
 import numpy as np
 import re
-fdir = 'data/well_log_files/Clean_LAS/'
-flist = os.listdir(fdir)
-fname = flist[0]
 
-df = pd.read_csv(fdir+fname, sep='\n', header=None)
+
+
 
 las_seps = ['~Well', '~Curve', '~Params', '~Other', '~ASCII']
 
@@ -22,6 +20,7 @@ def white_rm(x):
 
 def log_parse_one(fname):
     
+    df = pd.read_csv(fname, sep='\n', header=None)
     log_dict = {'~Well':None, '~Curve':None, '~Params':None, '~ASCII':None}
     for s in range(0, len(las_seps)):
         print(las_seps[s])
@@ -39,13 +38,16 @@ def log_parse_one(fname):
             info_end = df[df[0].str.contains(las_seps[s+1])].index[0]
             
             temp_df = df[info_start:info_end]
-            temp_df[0] = temp_df[0].map(white_rm)
-            temp_df = temp_df[0].str.split(':', expand=True)
-            temp_df[[2,3]] = temp_df[0].str.split(' ', 1, expand=True)
-            temp_df = pd.DataFrame(temp_df)
-            temp_df[4] = temp_df[1] + '_' + temp_df[2]
-            piv_df = temp_df[[3]].transpose()
-            piv_df.columns = temp_df[1]
+            if temp_df.shape[0]>0:
+                temp_df[0] = temp_df[0].map(white_rm)
+                temp_df = temp_df[0].str.split(':', expand=True)
+                temp_df[[2,3]] = temp_df[0].str.split(' ', 1, expand=True)
+                temp_df = pd.DataFrame(temp_df)
+                temp_df[4] = temp_df[1] + '_' + temp_df[2]
+                piv_df = temp_df[[3]].transpose()
+                piv_df.columns = temp_df[1]
+            else:
+                temp_df = pd.DataFrame()
             log_dict[las_seps[s]] = pd.concat([log_dict[las_seps[s]], piv_df])
     
     return log_dict
@@ -72,11 +74,32 @@ def log_dict2df(log_dict):
 
 #df_c = log_dict2df(log1)
 
+class renamer():
+    def __init__(self):
+        self.d = dict()
+    def __call__(self, x):
+        if x not in self.d:
+            self.d[x] = 0
+            return x
+        else:
+            self.d[x] += 1
+            return "%s_%d" % (x, self.d[x])
+
+
+
+fdir = 'data/well_log_files/Clean_LAS/'
+flist = os.listdir(fdir)
+fname = flist[0]
+
 log_df = pd.DataFrame()
 for fname in flist:
-    temp_log = log_parse_one(fname)
+    print(fname)
+    fpath = fdir+fname
+    temp_log = log_parse_one(fpath)
     temp_df = log_dict2df(temp_log)
-    log_df = pd.concat([log_df, temp_df])
+    temp_df.columns = [' '.join(s.split()) for s in temp_df.columns]
+    temp_df = temp_df.rename(columns=renamer())
+    log_df = pd.concat([log_df.reset_index(drop=True), temp_df.reset_index(drop=True)])
     
 log_df.to_csv('data/combine_log.csv')    
     
