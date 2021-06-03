@@ -56,9 +56,9 @@ def log_parse_one(fname):
 def log_dict2df(log_dict):
    
     df_ascii = log_dict['~ASCII']
-    nunique = df_ascii.apply(pd.Series.nunique)
-    drop_cols = nunique[nunique==1].index
-    df_ascii = df_ascii.drop(drop_cols, axis=1)
+    #nunique = df_ascii.apply(pd.Series.nunique)
+    #drop_cols = nunique[nunique==1].index
+    df_ascii = df_ascii.drop(1, axis=1)
     df_ascii.columns = log_dict['~Curve'].columns
     
     df_params = log_dict['~Params']
