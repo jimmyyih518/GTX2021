@@ -579,7 +579,7 @@ def dist_weight(x):
     endx = 70
     pdc = minx + (maxx - minx) / (1+curv**(startx+endx/2-x)/endx)
     return 1-pdc
-
+dist_weight(60)
 lplot = []
 for i in range(0,20):
     lplot.append(dist_weight(i))

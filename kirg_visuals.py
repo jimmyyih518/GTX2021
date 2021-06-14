@@ -5,6 +5,8 @@ Created on Tue Jun  8 22:57:39 2021
 @author: JZ2018
 """
 
+#https://ags.aer.ca/publication/model-2019-02
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

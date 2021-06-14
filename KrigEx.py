@@ -98,12 +98,15 @@ def genKrig(df, fmtn, xcol, ycol, zcol, grd_step):
 
 
 #df = pd.read_csv('data/proc_combined3.csv')
-df = pd.read_csv('data/proc_log_well_combine.csv')
-Combined3 = pd.read_csv('Combined3.csv')
-ex_df = Combined3[['UWI', 'TrueTemp']]
-ex_df.columns = ['UWI', 'EX_TrueTemp']
-df = df.merge(ex_df, how='left', on='UWI')
-df['EX_TrueTempGrad_CpM'] = df['EX_TrueTemp'] / df['TVDMSS']
+#df = pd.read_csv('data/proc_log_well_combine.csv')
+#Combined3 = pd.read_csv('Combined3.csv')
+#ex_df = Combined3[['UWI', 'TrueTemp']]
+#ex_df.columns = ['UWI', 'EX_TrueTemp']
+#df = df.merge(ex_df, how='left', on='UWI')
+#df['EX_TrueTempGrad_CpM'] = df['EX_TrueTemp'] / df['TVDMSS']
+
+df =   pd.read_csv('data/Final_Preds.csv')
+df['NNET_Error'] = df['EX_TrueTemp'] - df['NNET_Pred_TempC']
 ##----------------------------------------------------------
 Combined3['CLS_CumOil_bbl'] = coalesce(Combined3, ['Oil Total Cum (bbl)_0','Oil Total Cum (bbl)_1','Oil Total Cum (bbl)_2','Oil Total Cum (bbl)_3',
                                                    'Oil Maximum (bbl)_0', 'Oil Maximum (bbl)_1', 'Oil Maximum (bbl)_2', 'Oil Maximum (bbl)_3',
@@ -126,6 +129,8 @@ kvars = ['CLS_GAMMA', 'CLS_MUDTEMPC', 'CLS_RESISTIVITY', 'CLS_POROSITY',
          'CLS_CumOil_bbl', 'CLS_CumGas_mcf', 'CLS_CumWater_bbl', 'CLS_OGR_bblmmcf']
 
 #Krig_var =  kvars[3]
+
+kvars= ['NNET_Error']
 krig_dict = {}
 for Krig_var in kvars:
     print(Krig_var)
@@ -155,6 +160,29 @@ for Krig_var in kvars:
     df_combine = pd.concat([df_dvn, df_egb])
 
     df_combine[['UWI', f'Krig_{Krig_var}']].to_csv(f'data/Krig_{Krig_var}.csv')
+
+plt.imshow(dvn_map['zmap'])
+plt.imshow(egb_map['zmap'])
+
+grp_df = df[df['fmtn']=='EGB'].groupby('Set')
+ycol = 'Lat'
+xcol = 'Long'
+    
+grd_step=100
+gmin_lat = int(df[df['fmtn']=='EGB'][ycol].min()-1)
+gmax_lat = int(df[df['fmtn']=='EGB'][ycol].max()+1)
+gmin_lon = int(df[df['fmtn']=='EGB'][xcol].min()-1)
+gmax_lon = int(df[df['fmtn']=='EGB'][xcol].max()+1)
+
+plt.imshow(egb_map['zmap'], alpha=0.5)
+for name, group in grp_df:
+    plt.scatter((group['Long']-gmin_lon)*100, (gmax_lat-group['Lat'])*100,marker='o', label=name)
+plt.legend()
+plt.contour(egb_map['zmap'], colors='black')
+plt.title(f'Mapped  Residuals')
+plt.show()
+
+
 
 # import pickle
 # pickle.dump(krig_dict, open('data/Krig_Dict.pickle', 'wb'))
